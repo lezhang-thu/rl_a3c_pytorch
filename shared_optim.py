@@ -2,7 +2,6 @@ from __future__ import division
 import math
 import torch
 import torch.optim as optim
-from collections import defaultdict
 
 
 class SharedRMSprop(optim.Optimizer):
@@ -11,13 +10,13 @@ class SharedRMSprop(optim.Optimizer):
 
     def __init__(self,
                  params,
-                 lr=7e-4,
+                 lr=1e-2,
                  alpha=0.99,
-                 eps=0.1,
+                 eps=1e-8,
                  weight_decay=0,
                  momentum=0,
                  centered=False):
-        defaults = defaultdict(
+        defaults = dict(
             lr=lr,
             alpha=alpha,
             eps=eps,
@@ -29,11 +28,19 @@ class SharedRMSprop(optim.Optimizer):
         for group in self.param_groups:
             for p in group['params']:
                 state = self.state[p]
-                state['step'] = torch.zeros(1)
-                state['grad_avg'] = p.data.new().resize_as_(p.data).zero_()
-                state['square_avg'] = p.data.new().resize_as_(p.data).zero_()
-                state['momentum_buffer'] = p.data.new().resize_as_(
-                    p.data).zero_()
+                state['step'] = torch.tensor(0, dtype=torch.float32)
+
+                state['square_avg'] = torch.zeros_like(p.data)
+                if group['momentum'] > 0:
+                    state['momentum_buffer'] = torch.zeros_like(p.data)
+                if group['centered']:
+                    state['grad_avg'] = torch.zeros_like(p.data)
+
+    def __setstate__(self, state):
+        super(SharedRMSprop, self).__setstate__(state)
+        for group in self.param_groups:
+            group.setdefault('momentum', 0)
+            group.setdefault('centered', False)
 
     def share_memory(self):
         for group in self.param_groups:
@@ -101,10 +108,10 @@ class SharedAdam(optim.Optimizer):
                  params,
                  lr=1e-3,
                  betas=(0.9, 0.999),
-                 eps=1e-3,
+                 eps=1e-8,
                  weight_decay=0,
                  amsgrad=False):
-        defaults = defaultdict(
+        defaults = dict(
             lr=lr,
             betas=betas,
             eps=eps,
@@ -115,11 +122,17 @@ class SharedAdam(optim.Optimizer):
         for group in self.param_groups:
             for p in group['params']:
                 state = self.state[p]
-                state['step'] = torch.zeros(1)
-                state['exp_avg'] = p.data.new().resize_as_(p.data).zero_()
-                state['exp_avg_sq'] = p.data.new().resize_as_(p.data).zero_()
-                state['max_exp_avg_sq'] = p.data.new().resize_as_(
-                    p.data).zero_()
+                state['step'] = torch.tensor(0, dtype=torch.float32)
+
+                state['exp_avg'] = torch.zeros_like(p.data)
+                state['exp_avg_sq'] = torch.zeros_like(p.data)
+                if amsgrad:
+                    state['max_exp_avg_sq'] = torch.zeros_like(p.data)
+
+    def __setstate__(self, state):
+        super(SharedAdam, self).__setstate__(state)
+        for group in self.param_groups:
+            group.setdefault('amsgrad', False)
 
     def share_memory(self):
         for group in self.param_groups:
@@ -178,8 +191,8 @@ class SharedAdam(optim.Optimizer):
 
                 bias_correction1 = 1 - beta1**state['step'].item()
                 bias_correction2 = 1 - beta2**state['step'].item()
-                step_size = group['lr'] * \
-                    math.sqrt(bias_correction2) / bias_correction1
+                step_size = group['lr'] * math.sqrt(
+                    bias_correction2) / bias_correction1
 
                 p.data.addcdiv_(-step_size, exp_avg, denom)
 

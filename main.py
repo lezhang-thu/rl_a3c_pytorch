@@ -158,7 +158,7 @@ if __name__ == '__main__':
     p.start()
     processes.append(p)
     time.sleep(0.1)
-    for rank in range(0, args.workers):
+    for rank in range(args.workers):
         p = mp.Process(
             target=train, args=(rank, args, shared_model, optimizer, env_conf))
         p.start()

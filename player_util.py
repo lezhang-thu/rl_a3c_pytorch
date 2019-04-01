@@ -1,11 +1,10 @@
 from __future__ import division
 import torch
 import torch.nn.functional as F
-from torch.autograd import Variable
 
 
 class Agent(object):
-    def __init__(self, model, env, args, state):
+    def __init__(self, model, env, args, state, *, gpu_id=-1):
         self.model = model
         self.env = env
         self.state = state
@@ -20,23 +19,24 @@ class Agent(object):
         self.done = True
         self.info = None
         self.reward = 0
-        self.gpu_id = -1
+
+        self.device = torch.device('cuda:{}'.format(gpu_id)
+                                   if gpu_id >= 0 else 'cpu')
 
     def action_train(self):
-        value, logit, (self.hx, self.cx) = self.model((Variable(
-            self.state.unsqueeze(0)), (self.hx, self.cx)))
+        value, logit, (self.hx, self.cx) = self.model((self.state.unsqueeze(0),
+                                                       (self.hx, self.cx)))
         prob = F.softmax(logit, dim=1)
         log_prob = F.log_softmax(logit, dim=1)
         entropy = -(log_prob * prob).sum(1)
         self.entropies.append(entropy)
-        action = prob.multinomial(1).data
-        log_prob = log_prob.gather(1, Variable(action))
-        state, self.reward, self.done, self.info = self.env.step(
-            action.cpu().numpy())
-        self.state = torch.from_numpy(state).float()
-        if self.gpu_id >= 0:
-            with torch.cuda.device(self.gpu_id):
-                self.state = self.state.cuda()
+        action = prob.multinomial(1).detach()
+        log_prob = log_prob.gather(1, action)
+        state, self.reward, self.done, self.info = self.env.step(action.item())
+
+        self.state = torch.from_numpy(state).to(torch.float32)
+        self.state = self.state.to(self.device)
+
         self.reward = max(min(self.reward, 1), -1)
         self.values.append(value)
         self.log_probs.append(log_prob)
@@ -46,27 +46,22 @@ class Agent(object):
     def action_test(self):
         with torch.no_grad():
             if self.done:
-                if self.gpu_id >= 0:
-                    with torch.cuda.device(self.gpu_id):
-                        self.cx = Variable(
-                            torch.zeros(1, 512).cuda())
-                        self.hx = Variable(
-                            torch.zeros(1, 512).cuda())
-                else:
-                    self.cx = Variable(torch.zeros(1, 512))
-                    self.hx = Variable(torch.zeros(1, 512))
+                self.cx = torch.zeros(1, 512).to(device)
+                self.hx = torch.zeros(1, 512).to(device)
             else:
-                self.cx = Variable(self.cx.data)
-                self.hx = Variable(self.hx.data)
-            value, logit, (self.hx, self.cx) = self.model((Variable(
-                self.state.unsqueeze(0)), (self.hx, self.cx)))
-        prob = F.softmax(logit, dim=1)
-        action = prob.max(1)[1].data.cpu().numpy()
-        state, self.reward, self.done, self.info = self.env.step(action[0])
-        self.state = torch.from_numpy(state).float()
-        if self.gpu_id >= 0:
-            with torch.cuda.device(self.gpu_id):
-                self.state = self.state.cuda()
+                self.cx = self.cx.detach()
+                self.hx = self.hx.detach()
+            value, logit, (self.hx, self.cx) = self.model(
+                (self.state.unsqueeze(0), (self.hx, self.cx)))
+            prob = F.softmax(logit, dim=1)
+            action = torch.max(prob, 1)
+
+        action = action.item()
+        state, self.reward, self.done, self.info = self.env.step(action)
+
+        self.state = torch.from_numpy(state).to(torch.float32)
+        self.state = self.state.to(device)
+
         self.eps_len += 1
         return self
 

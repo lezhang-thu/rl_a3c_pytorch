@@ -46,8 +46,8 @@ class Agent(object):
     def action_test(self):
         with torch.no_grad():
             if self.done:
-                self.cx = torch.zeros(1, 512).to(device)
-                self.hx = torch.zeros(1, 512).to(device)
+                self.cx = torch.zeros(1, 512).to(self.device)
+                self.hx = torch.zeros(1, 512).to(self.device)
             else:
                 self.cx = self.cx.detach()
                 self.hx = self.hx.detach()
@@ -60,7 +60,7 @@ class Agent(object):
         state, self.reward, self.done, self.info = self.env.step(action)
 
         self.state = torch.from_numpy(state).to(torch.float32)
-        self.state = self.state.to(device)
+        self.state = self.state.to(self.device)
 
         self.eps_len += 1
         return self

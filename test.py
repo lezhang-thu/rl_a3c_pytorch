@@ -7,6 +7,7 @@ from model import A3Clstm
 from player_util import Agent
 import time
 import logging
+from utils import weights_init
 
 
 def test(args, shared_model, env_conf):
@@ -34,6 +35,7 @@ def test(args, shared_model, env_conf):
     player = Agent(None, env, args, None, gpu_id=gpu_id)
     player.model = A3Clstm(player.env.observation_space.shape[0],
                            player.env.action_space)
+    player.model.apply(weights_init)
 
     player.state = player.env.reset()
     player.eps_len += 2

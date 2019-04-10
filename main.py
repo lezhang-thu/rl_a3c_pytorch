@@ -12,6 +12,7 @@ from test import test
 from shared_optim import SharedRMSprop, SharedAdam
 #from gym.configuration import undo_logger_setup
 import time
+from utils import weights_init
 
 #undo_logger_setup()
 parser = argparse.ArgumentParser(description='A3C')
@@ -135,6 +136,8 @@ if __name__ == '__main__':
             env_conf = setup_json[i]
     env = atari_env(args.env, env_conf, args)
     shared_model = A3Clstm(env.observation_space.shape[0], env.action_space)
+    shared_model.apply(weights_init)
+    
     if args.load:
         saved_state = torch.load(
             '{0}{1}.dat'.format(args.load_model_dir, args.env),

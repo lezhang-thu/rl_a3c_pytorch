@@ -6,6 +6,7 @@ from environment import atari_env
 from utils import ensure_shared_grads
 from model import A3Clstm
 from player_util import Agent
+from utils import weights_init
 
 
 def train(rank, args, shared_model, optimizer, env_conf):
@@ -28,6 +29,7 @@ def train(rank, args, shared_model, optimizer, env_conf):
 
     player.model = A3Clstm(player.env.observation_space.shape[0],
                            player.env.action_space)
+    player.model.apply(weights_init)
 
     player.state = player.env.reset()
     player.state = torch.from_numpy(player.state).to(torch.float32)

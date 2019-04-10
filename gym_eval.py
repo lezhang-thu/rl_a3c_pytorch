@@ -11,6 +11,7 @@ import gym
 import logging
 import time
 #from gym.configuration import undo_logger_setup
+from utils import weights_init
 
 #undo_logger_setup()
 parser = argparse.ArgumentParser(description='A3C_EVAL')
@@ -111,6 +112,8 @@ reward_total_sum = 0
 player = Agent(None, env, args, None)
 player.model = A3Clstm(player.env.observation_space.shape[0],
                        player.env.action_space)
+player.model.apply(weights_init)
+
 player.gpu_id = gpu_id
 if gpu_id >= 0:
     with torch.cuda.device(gpu_id):

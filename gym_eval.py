@@ -87,13 +87,11 @@ for i in setup_json.keys():
 
 gpu_id = args.gpu_id
 
+device = torch.device('cuda:{}'.format(gpu_id) if gpu_id >= 0 else 'cpu')
+
 torch.manual_seed(args.seed)
 if gpu_id >= 0:
     torch.cuda.manual_seed(args.seed)
-
-saved_state = torch.load(
-    '{0}{1}.dat'.format(args.load_model_dir, args.env),
-    map_location=lambda storage, loc: storage)
 
 log = {}
 setup_logger('{}_mon_log'.format(args.env), r'{0}{1}_mon_log'.format(
@@ -112,29 +110,24 @@ reward_total_sum = 0
 player = Agent(None, env, args, None)
 player.model = A3Clstm(player.env.observation_space.shape[0],
                        player.env.action_space)
-player.model.apply(weights_init)
-
 player.gpu_id = gpu_id
-if gpu_id >= 0:
-    with torch.cuda.device(gpu_id):
-        player.model = player.model.cuda()
+
+saved_state = torch.load(
+    '{0}{1}.dat'.format(args.load_model_dir, args.env), map_location=device)
+
+player.model = player.model.to(device)
 if args.new_gym_eval:
     player.env = gym.wrappers.Monitor(
         player.env, "{}_monitor".format(args.env), force=True)
 
-if gpu_id >= 0:
-    with torch.cuda.device(gpu_id):
-        player.model.load_state_dict(saved_state)
-else:
-    player.model.load_state_dict(saved_state)
-
+player.model.load_state_dict(saved_state)
 player.model.eval()
+
 for i_episode in range(args.num_episodes):
     player.state = player.env.reset()
-    player.state = torch.from_numpy(player.state).float()
-    if gpu_id >= 0:
-        with torch.cuda.device(gpu_id):
-            player.state = player.state.cuda()
+    player.state = torch.from_numpy(player.state).to(torch.float32)
+    player.state = player.state.to(device)
+
     player.eps_len += 2
     reward_sum = 0
     while True:
@@ -148,10 +141,8 @@ for i_episode in range(args.num_episodes):
         if player.done and not player.info:
             state = player.env.reset()
             player.eps_len += 2
-            player.state = torch.from_numpy(state).float()
-            if gpu_id >= 0:
-                with torch.cuda.device(gpu_id):
-                    player.state = player.state.cuda()
+            player.state = torch.from_numpy(state).to(torch.float32)
+            player.state = player.state.to(device)
         elif player.info:
             num_tests += 1
             reward_total_sum += reward_sum

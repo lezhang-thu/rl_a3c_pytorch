@@ -4,6 +4,7 @@ import numpy as np
 import torch
 import json
 import logging
+import torch.nn as nn
 
 
 def setup_logger(logger_name, log_file, level=logging.INFO):

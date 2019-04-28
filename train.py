@@ -1,5 +1,5 @@
 from __future__ import division
-from setproctitle import setproctitle as ptitle
+# from setproctitle import setproctitle as ptitle
 import torch
 import torch.optim as optim
 from environment import atari_env
@@ -10,7 +10,7 @@ from utils import weights_init
 
 
 def train(rank, args, shared_model, optimizer, env_conf):
-    ptitle('Training Agent: {}'.format(rank))
+    # ptitle('Training Agent: {}'.format(rank))
     gpu_id = args.gpu_ids[rank % len(args.gpu_ids)]
     device = torch.device('cuda:{}'.format(gpu_id) if gpu_id >= 0 else 'cpu')
 

@@ -1,5 +1,6 @@
 from __future__ import print_function, division
 import os
+
 os.environ["OMP_NUM_THREADS"] = "1"
 import argparse
 import torch
@@ -10,11 +11,11 @@ from model import A3Clstm
 from train import train
 from test import test
 from shared_optim import SharedRMSprop, SharedAdam
-#from gym.configuration import undo_logger_setup
+# from gym.configuration import undo_logger_setup
 import time
 from utils import weights_init
 
-#undo_logger_setup()
+# undo_logger_setup()
 parser = argparse.ArgumentParser(description='A3C')
 parser.add_argument(
     '--lr',
@@ -137,7 +138,7 @@ if __name__ == '__main__':
     env = atari_env(args.env, env_conf, args)
     shared_model = A3Clstm(env.observation_space.shape[0], env.action_space)
     shared_model.apply(weights_init)
-    
+
     if args.load:
         saved_state = torch.load(
             '{0}{1}.dat'.format(args.load_model_dir, args.env),

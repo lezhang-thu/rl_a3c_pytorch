@@ -1,5 +1,5 @@
 from __future__ import division
-from setproctitle import setproctitle as ptitle
+# from setproctitle import setproctitle as ptitle
 import torch
 from environment import atari_env
 from utils import setup_logger
@@ -11,7 +11,7 @@ from utils import weights_init
 
 
 def test(args, shared_model, env_conf):
-    ptitle('Test Agent')
+    # ptitle('Test Agent')
     gpu_id = args.gpu_ids[-1]
     device = torch.device('cuda:{}'.format(gpu_id) if gpu_id >= 0 else 'cpu')
 

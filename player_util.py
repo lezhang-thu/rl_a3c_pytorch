@@ -54,8 +54,7 @@ class Agent(object):
             value, logit, (self.hx, self.cx) = self.model(
                 (self.state.unsqueeze(0), (self.hx, self.cx)))
             prob = F.softmax(logit, dim=1)
-            action = torch.max(prob, 1)
-
+            _, action = torch.max(prob, 1)
         action = action.item()
         state, self.reward, self.done, self.info = self.env.step(action)
 

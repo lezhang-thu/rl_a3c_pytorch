@@ -77,7 +77,7 @@ def train(rank, args, shared_model, optimizer, env_conf):
 
             # Generalized Advantage Estimataion
             delta_t = player.rewards[i] + args.gamma * player.values[i + 1].detach(
-            ) - player.values[i].datach()
+            ) - player.values[i].detach()
 
             gae = gae * args.gamma * args.tau + delta_t
 

@@ -107,7 +107,7 @@ env = atari_env("{}".format(args.env), env_conf, args)
 num_tests = 0
 start_time = time.time()
 reward_total_sum = 0
-player = Agent(None, env, args, None)
+player = Agent(None, env, args, None, gpu_id=gpu_id)
 player.model = A3Clstm(player.env.observation_space.shape[0],
                        player.env.action_space)
 player.gpu_id = gpu_id

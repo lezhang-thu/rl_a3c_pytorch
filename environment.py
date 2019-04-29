@@ -3,10 +3,10 @@ import gym
 import numpy as np
 from collections import deque
 from gym.spaces.box import Box
-#from skimage.color import rgb2gray
+# from skimage.color import rgb2gray
 from cv2 import resize
-#from skimage.transform import resize
-#from scipy.misc import imresize as resize
+# from skimage.transform import resize
+# from scipy.misc import imresize as resize
 import random
 
 
@@ -60,9 +60,9 @@ class NormalizedEnv(gym.ObservationWrapper):
     def observation(self, observation):
         self.num_steps += 1
         self.state_mean = self.state_mean * self.alpha + \
-            observation.mean() * (1 - self.alpha)
+                          observation.mean() * (1 - self.alpha)
         self.state_std = self.state_std * self.alpha + \
-            observation.std() * (1 - self.alpha)
+                         observation.std() * (1 - self.alpha)
 
         unbiased_mean = self.state_mean / (1 - pow(self.alpha, self.num_steps))
         unbiased_std = self.state_std / (1 - pow(self.alpha, self.num_steps))
@@ -87,7 +87,7 @@ class NoopResetEnv(gym.Wrapper):
         if self.override_num_noops is not None:
             noops = self.override_num_noops
         else:
-            noops = self.unwrapped.np_random.randint(1, self.noop_max + 1)  #pylint: disable=E1101
+            noops = self.unwrapped.np_random.randint(1, self.noop_max + 1)  # pylint: disable=E1101
         assert noops > 0
         obs = None
         for _ in range(noops):
@@ -186,4 +186,3 @@ class MaxAndSkipEnv(gym.Wrapper):
         obs = self.env.reset(**kwargs)
         self._obs_buffer.append(obs)
         return obs
-

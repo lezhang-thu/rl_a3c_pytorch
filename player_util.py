@@ -41,7 +41,6 @@ class Agent(object):
         self.values.append(value)
         self.log_probs.append(log_prob)
         self.rewards.append(self.reward)
-        return self
 
     def action_test(self):
         with torch.no_grad():
@@ -62,11 +61,9 @@ class Agent(object):
         self.state = self.state.to(self.device)
 
         self.eps_len += 1
-        return self
 
     def clear_actions(self):
         self.values = []
         self.log_probs = []
         self.rewards = []
         self.entropies = []
-        return self

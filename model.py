@@ -23,12 +23,18 @@ class A3Clstm(torch.nn.Module):
 
     def forward(self, inputs):
         inputs, (hx, cx) = inputs
+
         x = F.relu(self.maxp1(self.conv1(inputs)))
         x = F.relu(self.maxp2(self.conv2(x)))
         x = F.relu(self.maxp3(self.conv3(x)))
         x = F.relu(self.maxp4(self.conv4(x)))
 
+
         x = x.view(x.size(0), -1)
+
+        print(x.size())
+        exit()
+
 
         hx, cx = self.lstm(x, (hx, cx))
 

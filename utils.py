@@ -29,10 +29,9 @@ def read_config(file_path):
 def ensure_shared_grads(model, shared_model, gpu=False):
     for param, shared_param in zip(model.parameters(),
                                    shared_model.parameters()):
-        if param.grad is not None and not gpu:
-            shared_param._grad = param.grad
-        elif param.grad is not None and gpu:
-            shared_param._grad = param.grad.cpu()
+        if param.grad is None:
+            continue
+        shared_param._grad = param.grad if not gpu else param.grad.cpu()
 
 
 def weights_init(m):
